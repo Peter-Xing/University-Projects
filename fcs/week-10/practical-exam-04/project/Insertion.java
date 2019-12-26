@@ -1,15 +1,4 @@
-/*
-*   Foundations of Computer Science
-*   2018, Semester 02
-*   Practical-Exam-04
-*
-*   student (id): a1756195
-*   student (name): Luoyang Xing
-*
-* Note: in order to finish your exam you need to make changes in this class.
-* Note that you have to implemented lines from 57 - 67
-*
-*/
+
 public class Insertion extends Sort{
 
 	@Override

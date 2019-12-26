@@ -1,11 +1,4 @@
-//==================================
-// Foundations of Computer Science
-// Student: Luoyang Xing
-// id: a1756195
-// Semester: 2
-// Year: 2018
-// Practical Number: 5
-//===================================
+
 public class MergeSort extends MySortAlg{
 	//merge sort in descending order
 	//@override

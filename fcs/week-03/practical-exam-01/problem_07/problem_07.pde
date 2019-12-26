@@ -1,12 +1,3 @@
-//==================================
-// Foundations of Computer Science
-// Student: Luoyang Xing
-// id: a1756195
-// Semester: 2
-// Year: 2018
-// Practical Exam Number: 01
-//===================================
-
 // Code to analyse:
 // some lines of code do not have semicolon at the end of the line
 

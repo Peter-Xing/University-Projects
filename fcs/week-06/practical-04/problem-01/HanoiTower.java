@@ -1,11 +1,4 @@
-//==================================
-// Foundations of Computer Science
-// Student: Luoyang Xing
-// id: a1756195
-// Semester: 2
-// Year: 2018
-// Practical Number: 04 part 2
-//===================================
+
 public class HanoiTower{
 	//attributes
 	private	int [] p1;

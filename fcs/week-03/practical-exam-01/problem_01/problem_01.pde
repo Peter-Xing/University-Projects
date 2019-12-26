@@ -1,11 +1,4 @@
-//==================================
-// Foundations of Computer Science
-// Student: Luoyang Xing
-// id: a1756195
-// Semester: 2
-// Year: 2018
-// Practical Exam Number: 01
-//===================================
+
 
 void setup(){
   size(640,340);                //creating the canvas with size 640,340

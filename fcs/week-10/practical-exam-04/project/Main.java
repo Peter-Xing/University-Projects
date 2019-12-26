@@ -1,15 +1,4 @@
-/*
-*   Foundations of Computer Science
-*   2018, Semester 02
-*   Practical-Exam-04
-*
-*   student (id): a1756195
-*   student (name): Luoyang Xing
-*
-*
-* Note: in order to finish your exam you are NOT required to make any changes in this class
-* ** Warning ** : The changes performed on this file will not be marked or considered for marking;
-*/
+
 import java.util.Scanner;
 import java.io.IOException;
 

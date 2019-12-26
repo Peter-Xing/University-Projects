@@ -1,8 +1,4 @@
-//Course: Foundation of Computer Science
-//Semester: 2018 Semester 2
-//Name: Luoyang Xing
-//ID: a1756195
-//exam: practical exam-05
+
 public class Student{
 	//attributes
 	private String name; //student's name

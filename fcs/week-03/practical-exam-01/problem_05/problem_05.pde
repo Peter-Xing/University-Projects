@@ -1,12 +1,3 @@
-//==================================
-// Foundations of Computer Science
-// Student: Luoyang Xing
-// id: a1756195
-// Semester: 2
-// Year: 2018
-// Practical Exam Number: 01
-//===================================
-
 int cumulative_sum (int [] array){
   int sum = 0;                      
   for(int i=0; i<array.length; i++){ // get the sum of array by for loop

@@ -1,12 +1,4 @@
-//*********************************************
-//Course: Foundations of Computer Science
-//Semester: 2
-//Year: 2018
-//Name: Luoyang Xing
-//Student ID: a1756195
-//Exam: Final Practical Exam
-//problem-04/DataStructure.java
-//**********************************************
+
 public class DataStructure implements Structurable{
 
 	//sort method

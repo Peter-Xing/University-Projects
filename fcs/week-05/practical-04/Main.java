@@ -1,11 +1,4 @@
-//==================================
-// Foundations of Computer Science
-// Student: Luoyang Xing	
-// id: a1756195
-// Semester: 2
-// Year: 2018
-// Practical : 04
-//===================================
+
 class Main{
 	public static void main(String[] args) {
 		//get human player and computer's choices and use them in referee class

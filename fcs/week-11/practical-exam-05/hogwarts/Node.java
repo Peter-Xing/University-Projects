@@ -1,8 +1,4 @@
-//Course: Foundation of Computer Science
-//Semester: 2018 Semester 2
-//Name: Luoyang Xing
-//ID: a1756195
-//exam: practical exam-05
+
 public class Node{
 	//attributes
 	private Student info;//contains student information

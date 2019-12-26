@@ -1,11 +1,3 @@
-//==================================
-// Foundations of Computer Science
-// Student: Luoyang Xing
-// id: a1756195
-// Semester: 2
-// Year: 2018
-// Practical Exam Number: 01
-//===================================
 
 size(640, 360);        // set the parameter needed to draw the picture
 background(0);
