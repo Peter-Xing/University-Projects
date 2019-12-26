@@ -1,0 +1,104 @@
+//################################
+//Course: Operating Systems
+//Semester: 2, 2019
+//Name: Luoyang Xing
+//ID: a1756195
+//Assignment 1
+//################################
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <algorithm>
+#include <queue>
+
+using namespace std;
+
+//define a customer class, each line in input file
+//is a string line contains the customer object's info
+class Customer
+{
+	public:
+		string ID;
+		int arTime;
+		int priority;
+		int age;
+		int tickets;
+
+		Customer(){
+			this->ID = "none";
+			this->arTime = 999;
+			this->priority = 999;
+			this->age = 999;
+			this->tickets = 999;
+		}
+		Customer(string ID,int arTime, int priority,int age,int tickets)
+		{
+			this->ID = ID;
+			this->arTime = arTime;
+			this->priority = priority;
+			this->age = age;
+			this->tickets = tickets;
+		}
+};
+
+
+int main(int argc, char const *argv[])
+{
+	fstream inFile;
+	string line;
+	//input the customer information file
+	inFile.open(argv[1]);
+
+	//create a vector of string cus to store each customer's info
+	vector<string> cus;
+	string delimiter = " ";
+	while (getline(inFile, line))
+	{
+		size_t pos = 0;
+		string token;
+		while ((pos = line.find(delimiter)) != string::npos) {
+   		token = line.substr(0, pos);
+   		cus.push_back(token);
+    	line.erase(0, pos + delimiter.length());
+		}
+		cus.push_back(line);
+	}
+	inFile.close();
+
+	//next we store these info in a vector of customer objects
+	std::vector<Customer> cus0;
+	for (int i = 0; i < cus.size()/5; ++i)
+	{
+		Customer c;
+		c.ID = cus[(5*i)];
+		int x = std::stoi(cus[5*i+1]);
+	//	std::istringstream iss ();
+	//	iss >> x;
+		c.arTime = x;
+		int y = std::stoi(cus[5*i+2]);
+		c.priority = y;
+		int z = std::stoi(cus[5*i+3]);
+		c.age = z;
+		int b = std::stoi(cus[5*i+4]);
+		c.tickets = b;
+		cus0.push_back(c);
+	}
+	//print cus0 vector of Customer objects in input file
+	for (size_t i = 0; i < cus0.size(); ++i)
+	{
+		cout<<cus0[i].ID<<endl;
+	}
+
+	//NEXT we make them into queue 1 and queue 2
+	
+
+
+
+
+
+
+
+	return 0;
+}

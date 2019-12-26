@@ -1,0 +1,263 @@
+//################################
+//Course: Operating Systems
+//Semester: 2, 2019
+//Name: Luoyang Xing
+//ID: a1756195
+//Assignment 2
+//################################
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <algorithm>
+#include <queue>
+#include <iomanip>
+
+using namespace std;
+
+
+const int DEBUG_PRINT_QUEUE = false;
+
+
+int main(int argc, char const *argv[])
+{
+	fstream inFile;
+	string line;
+	//input the customer information file
+	inFile.open("input.txt");
+
+	//create a vector of string cus to store inout data
+	vector<string> cus;
+	string delimiter = " ";
+	while (!inFile.eof())
+	{
+		getline(inFile, line);
+		size_t pos = 0;
+		string token;
+		while ((pos = line.find(delimiter)) != string::npos) {
+   		token = line.substr(0, pos);
+   		cus.push_back(token);
+    	line.erase(0, pos + delimiter.length());
+		}
+		cus.push_back(line);
+	}
+	inFile.close();
+
+	//we ensure the algorithm we use, the number of frames and page size
+	string psize, nframes, alg;//strings of inputs
+	psize = argv[2];
+	nframes = argv[3];
+	alg = argv[4];
+	int ps, nf;
+	ps = stoi(psize);
+	nf = stoi(nframes);
+
+	//we convert the input into 2 string vectors, one stores R or W, the other stores address
+	std::vector<string> rw;
+	std::vector<string> addr;
+
+	for (size_t i = 0; i < cus.size(); ++i)
+	{
+		if (cus[i] == "#")
+		{
+			i=i+1;
+		}
+		else if (cus[i]=="R"||cus[i]=="W")
+		{
+			rw.push_back(cus[i]);
+		}
+		else
+		{
+			addr.push_back(cus[i]);
+		}
+	}
+
+	int NR;
+	int NW;
+	//cout<<addr.size();
+	std::vector<int> pi; //vector of string including the page index
+	if (ps == 4096)
+	{
+		for (size_t i = 0; i < addr.size(); ++i)
+		{
+			string x;
+			int y;
+			x = addr[i][4];
+			y= std::stoi(x,0,16);
+			pi.push_back(y);
+
+		}
+	}
+	else if (ps == 1024)
+	{
+		for (size_t j = 0; j < addr.size(); ++j)
+		{
+		
+		string x;
+		string y;
+		int w;
+		int u;
+		x = addr[j][4];
+		y = addr[j][5];
+		w = std::stoi(y,0,16);
+		w = w/4;
+		u = std::stoi(x,0,16);
+		u = u *16 + w;
+		pi.push_back(u);
+		}
+	}
+
+	else if (ps==2048)
+	{
+		for (size_t l = 0; l < addr.size(); ++l)
+		{
+		
+		string x;
+		string y;
+		int w;
+		int u;
+		x = addr[l][4];
+		y = addr[l][5];
+		w = std::stoi(y,0,16);
+		w = w/8;
+		u = std::stoi(x,0,16);
+		u = u *16 + w;
+		pi.push_back(u);
+		}
+	} 
+	else
+	{
+		for (size_t i = 0; i < addr.size(); ++i)
+		{
+			string x;
+			int y;
+			x = addr[i][4];
+			y= std::stoi(x,0,16);
+			pi.push_back(y);
+		}
+	}
+
+
+
+
+if (alg=="FIFO") //we do the FIFO replacement algorithm
+{
+
+	std::vector<int> frames;
+
+
+	//loop the rw
+	int MISS=0;
+	int dirty = 0;
+	std::vector<int> Dir;
+	for (size_t i = 0; i < rw.size(); ++i)
+	{
+		int e=0;
+		if (rw[i] == "W")
+		{
+			for (size_t j = 0; j < Dir.size(); ++j)
+			{
+				if (pi[i] == Dir[j])
+				{
+					e=1;
+				}
+			}
+			if (e==0)
+			{
+				Dir.push_back(pi[i]);
+			}
+		}
+		if (frames.size() < nf)
+		{
+			int exist = 0;
+			//loop frames to check if it already in it
+			for (size_t j = 0; j < frames.size(); ++j)
+			{
+				if (pi[i] == frames[j])
+				{
+					exist=1;
+				}
+			}
+			//if not found, push it 
+			if (exist==0)
+			{
+				frames.push_back(pi[i]);
+				MISS++;
+			
+			}
+		}
+		else // all frames filled
+		{
+			int exist1 = 0;
+			//loop frames to check if it already in it
+			for (size_t j = 0; j < frames.size(); ++j)
+			{
+				if (pi[i] == frames[j])
+				{
+					exist1=1;
+				}
+			}
+			if (exist1==0)//pop the oldest and push the new one in
+			{
+				//check if the first element already in Dir
+				for (size_t x = 0; x < Dir.size(); ++x)
+				{
+					if (frames[0] == Dir[x])
+					{
+						dirty++;
+						Dir.erase(Dir.begin()+x);
+					
+					}
+				}
+				frames.erase(frames.begin());
+				frames.push_back(pi[i]);
+				MISS++;
+
+			}
+		}
+	}
+
+	NR = MISS;
+	NW = dirty;
+
+}
+/*
+if (alg == "LRU")
+{
+	
+}
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	//final output, 4 spaces
+	cout<<setiosflags(ios::right) << setw(10)<<"events in trace:"<<setw(10)<<rw.size()<<endl;
+	cout<<setiosflags(ios::right) <<setw(10)<<"total disk reads:"<<setw(10)<<NR<<endl;
+	cout<<setiosflags(ios::right) <<setw(10)<<"total disk writes:"<<setw(10)<<NW<<endl;
+	cout<<setiosflags(ios::right) <<setw(10)<<"page faults:"<<setw(10)<<NR<<endl;
+
+
+
+	return 0;
+}

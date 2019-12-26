@@ -1,0 +1,162 @@
+//################################
+//Course: Operating Systems
+//Semester: 2, 2019
+//Name: Luoyang Xing
+//ID: a1756195
+//Assignment 2
+//################################
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <algorithm>
+#include <queue>
+#include <iomanip>
+
+using namespace std;
+
+
+const int DEBUG_PRINT_QUEUE = false;
+
+
+int main(int argc, char const *argv[])
+{
+	fstream inFile;
+	string line;
+	//input the customer information file
+	inFile.open("input.txt");
+
+	//create a vector of string cus to store inout data
+	vector<string> cus;
+	string delimiter = " ";
+	while (!inFile.eof())
+	{
+		getline(inFile, line);
+		size_t pos = 0;
+		string token;
+		while ((pos = line.find(delimiter)) != string::npos) {
+   		token = line.substr(0, pos);
+   		cus.push_back(token);
+    	line.erase(0, pos + delimiter.length());
+		}
+		cus.push_back(line);
+	}
+	inFile.close();
+
+	//we ensure the algorithm we use, the number of frames and page size
+	string psize, nframes, alg;//strings of inputs
+	psize = argv[2];
+	nframes = argv[3];
+	alg = argv[4];
+	int ps, nf;
+	ps = stoi(psize);
+	nf = stoi(nframes);
+
+	//we convert the input into 2 string vectors, one stores R or W, the other stores address
+	std::vector<string> rw;
+	std::vector<string> addr;
+
+	for (size_t i = 0; i < cus.size(); ++i)
+	{
+		if (cus[i] == "#")
+		{
+			i=i+1;
+		}
+		else if (cus[i]=="R"||cus[i]=="W")
+		{
+			rw.push_back(cus[i]);
+		}
+		else
+		{
+			addr.push_back(cus[i]);
+		}
+	}
+
+/*	
+	for (size_t i = 0; i < rw.size(); ++i)
+	{
+		cout<<rw[i]<<" "<<addr[i]<<endl;
+	}
+cout<<ps<<" "<<nf<<" "<<alg<<endl;
+*/
+
+if (alg=="FIFO") //we do the FIFO replacement algorithm
+{
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	//count of write in disks
+	string adr;
+	std::vector<string> wadd;
+	for (size_t i = 0; i < rw.size(); ++i)
+	{
+		if (rw[i]=="W")
+		{
+			int found = 0;
+			adr = addr[i].at(4);
+			//loop the write addr vector to see 
+			//if the address already been written
+			for (size_t j = 0; j < wadd.size(); ++j)
+			{
+				if (wadd[j] == adr)
+				{
+					found=1;
+				}
+			}
+			//then we push it in written addr vector if not found
+			if (found==0)
+			{
+				wadd.push_back(adr);
+			}
+
+		}
+	}
+	int nw;
+	nw = wadd.size();
+
+
+
+
+
+
+
+
+
+	//final output, 4 spaces
+	cout<<setiosflags(ios::right) <<"events in trace:"<< setw(10)<<rw.size()<<endl;
+	cout<<setiosflags(ios::right) <<"total disk reads:"<<setw(10)<<rw.size()-nw<<endl;
+	cout<<setiosflags(ios::right) <<"total disk writes:"<<setw(10)<<nw<<endl;
+	cout<<setiosflags(ios::right) <<"page faults:"<<setw(10)<<rw.size()-nw<<endl;
+
+
+
+	return 0;
+}

@@ -1,0 +1,6 @@
+loadbix "./";
+repeat
+{
+	vmstep ;
+}
+

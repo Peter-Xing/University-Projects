@@ -1,0 +1,1026 @@
+//################################
+//Course: Operating Systems
+//Semester: 2, 2019
+//Name: Luoyang Xing
+//ID: a1756195
+//Assignment 1
+//################################
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <algorithm>
+
+
+using namespace std;
+
+//define a customer class, each line in input file
+//is a string line contains the customer object's info
+class Customer
+{
+	public:
+		string ID;
+		int arTime;
+		int narTime;//the arrtime when re-enter a queue
+		int priority;
+		int quantum;
+		int age;
+		int tickets;
+		int ctkt;//trace the current tickets remaining to buy
+		int processCount;
+		int waitRuns;
+		int readytime;
+		int endtime;
+		int runningtime;
+		int working;
+		int cr;//current runningtime in one run
+
+		Customer(){
+			this->ID = "none";
+			this->arTime = 999;
+			this->narTime = 0;
+			this->priority = 999;
+			this->quantum = 0;
+			this->age = 999;
+			this->tickets = 999;
+			this->ctkt=0;
+			this->processCount = 0;
+			this->waitRuns = 0;
+			this->readytime = 0;
+			this->endtime = 0;
+			this->runningtime = 0;
+			this->working = 0;//0 is not working, 1 is working
+			this->cr=0;
+
+		}
+		Customer(string ID,int arTime,int narTime, int priority,int quantum,int age,int tickets,int ctkt,int processCount, int waitRuns,int readytime,int endtime,int runningtime,int working,int cr)
+		{
+			this->ID = ID;
+			this->arTime = arTime;
+			this->narTime = narTime;
+			this->priority = priority;
+			this->quantum = quantum;
+			this->age = age;
+			this->tickets = tickets;
+			this->ctkt=ctkt;
+			this->processCount = processCount;
+			this->waitRuns = waitRuns;
+			this->readytime = readytime;
+			this->endtime = endtime;
+			this->runningtime = runningtime;
+			this->working = working;
+			this->cr=cr;
+		}
+};
+
+bool lessSort (Customer a, Customer b){
+	return (a.narTime < b.narTime);
+}
+
+
+
+
+int main(int argc, char const *argv[])
+{
+	fstream inFile;
+	string line;
+	//input the customer information file
+	inFile.open(argv[1]);
+
+	//create a vector of string cus to store each customer's info
+	vector<string> cus;
+	string delimiter = " ";
+	while (getline(inFile, line))
+	{
+		size_t pos = 0;
+		string token;
+		while ((pos = line.find(delimiter)) != string::npos) {
+   		token = line.substr(0, pos);
+   		cus.push_back(token);
+    	line.erase(0, pos + delimiter.length());
+		}
+		cus.push_back(line);
+	}
+	inFile.close();
+
+	//next we store these info in a vector of customer objects
+	std::vector<Customer> cus0;
+	for (int i = 0; i < cus.size()/5; ++i)
+	{
+		Customer c;
+		c.ID = cus[(5*i)];
+		stringstream iss (cus[5*i+1]);
+		int x;
+		iss >> x;
+		c.arTime = x;
+		c.narTime = x;
+		stringstream isx(cus[5*i+2]);
+		int y;
+		isx>>y;
+		c.priority = y;
+		stringstream isy(cus[5*i+3]);
+		int z;
+		isy>>z;
+		c.age = z;
+		stringstream isw(cus[5*i+4]);
+		int b;
+		isw>>b;
+		c.tickets = b;
+		c.ctkt = b;
+		cus0.push_back(c);
+	}
+
+	//sort in ascending order of narTime
+	sort(cus0.begin(),cus0.end(),lessSort);
+
+	//NEXT we make them into queue 1 and queue 2
+	//in this we make queue 1 into 3 subqueues q1 q2 q3
+	//and the original queue 2 as q4, we also need a ready queue
+	//so we have q1 q2 q3 q4 readyq
+	//first we put customer objects in queues according to their priority
+	std::vector<Customer> q1;
+	std::vector<Customer> q2;
+	std::vector<Customer> q3;
+	std::vector<Customer> q4;
+	
+	//we have a timer integer frm 0 and increment 5 each time
+	int timer = 0;
+	int start =0;//the number to show if a customer is currently being processed at this time
+	std::vector<Customer> readyq;
+	while(timer<10000)
+	{
+		//every time the timer is at a time point, loop the customers' arrival time
+		//to know if the customers have arrived, and put them in the corresponding queue
+		for (size_t i = 0; i < cus0.size(); ++i)
+		{
+			if (cus0[i].narTime == timer)
+			{
+			if (cus0[i].priority == 1)
+			{
+				q1.push_back(cus0[i]);
+			}
+			else if (cus0[i].priority == 2)
+			{
+				q2.push_back(cus0[i]);
+			}
+			else if (cus0[i].priority == 3)
+			{
+				q3.push_back(cus0[i]);
+			}
+			else
+			{	
+				q4.push_back(cus0[i]);
+			}
+
+			}
+		}
+		//after the customers arrived being put to their queue
+		//we check from high priority queue to low priority queue
+		//and pick the correct customer to processCount
+		if(start == 0)//start = 0, no customer is being processed
+		{
+			if (!q1.empty())
+			{
+				Customer c = q1[0];//q1 has highest priority
+				int N = (8-c.priority)*10/5;//the quota for this run
+				int quantum = (8-c.priority)*10; //quantum time units
+				
+				//modify the object in the queue to store info
+				if (c.processCount == 0)
+				{
+					q1[0].quantum = quantum;
+					q1[0].readytime = timer;
+					q1[0].working = 1;
+				}
+				//after , we increment timer and change the start status
+				start = 1;
+				timer = timer +5;
+			}
+			
+			else if (q1.empty()&&!q2.empty())
+			{
+				Customer c = q2[0];//q2 has highest priority
+				int N = (8-c.priority)*10/5;//the quota for this run
+				int quantum = (8-c.priority)*10; //quantum time units
+				
+				//modify the object in the queue to store info
+				if (c.processCount == 0)
+				{
+					q2[0].quantum = quantum;
+					q2[0].readytime = timer;
+					q2[0].working = 1;
+				}
+				//after , we increment timer and change the start status
+				start = 1;
+				timer = timer +5;
+			}
+			else if (q1.empty()&&q2.empty()&&!q3.empty())
+			{
+				Customer c = q3[0];//q3 has highest priority
+				int N = (8-c.priority)*10/5;//the quota for this run
+				int quantum = (8-c.priority)*10; //quantum time units
+				
+				//modify the object in the queue to store info
+				if (c.processCount == 0)
+				{
+					q3[0].quantum = quantum;
+					q3[0].readytime = timer;
+					q3[0].working = 1;
+				}
+				//after , we increment timer and change the start status
+				start = 1;
+				timer = timer +5;
+			}
+			else if (q1.empty()&&q2.empty()&&q3.empty()&&!q4.empty())
+			{
+				Customer c = q4[0];//q4 has highest priority
+				
+				int quantum = 100;
+				
+				//modify the object in the queue to store info
+				if (c.processCount == 0)
+				{
+					q4[0].quantum = quantum;
+					q4[0].readytime = timer;
+					q4[0].working = 1;
+				}
+				//after , we increment timer and change the start status
+				start = 1;
+				timer = timer +5;
+			}
+			else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty())//all queues are empty
+			{
+				//no elements, just increment timer
+				timer = timer +5;	
+			}
+		}
+
+	
+		else if (start == 1)//one customer is being processed
+		{
+			//check which customer is being processed and if there is pre-emptive
+			if (!q1.empty()&&q1[0].working==1)
+			{//q1 is non-preemptive
+				Customer c = q1[0];//q1 has highest priority
+				if (c.tickets<=c.quantum/5)//it can be done in one quantum
+				{
+					if (c.ctkt>1)//in the middle 
+					{
+						q1[0].ctkt--;
+						q1[0].runningtime+=5;
+						q1[0].cr+=5;
+						timer = timer +5;
+					}
+					
+					else if (c.ctkt==1)// end, 1 to 0, start new customer
+					{
+						q1[0].endtime = timer;
+						q1[0].runningtime+=5;
+						q1[0].processCount++;
+						q1[0].cr=0;
+						//push_back to readyq
+						readyq.push_back(q1[0]);
+						//erase the first element in q1
+						q1.erase(q1.begin());
+
+						//start new customer
+						//start 0 case next
+						//new start now
+						if (!q1.empty())
+						{
+							Customer c = q1[0];//q1 has highest priority
+							
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q1[0].quantum = quantum;
+								q1[0].readytime = timer;
+								q1[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&!q2.empty())
+						{
+							Customer c = q2[0];//q2 has highest priority
+							
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q2[0].quantum = quantum;
+								q2[0].readytime = timer;
+								q2[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&!q3.empty())
+						{
+							Customer c = q3[0];//q3 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q3[0].quantum = quantum;
+								q3[0].readytime = timer;
+								q3[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&!q4.empty())
+						{
+							Customer c = q4[0];//q4 has highest priority
+				
+							int quantum = 100; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q4[0].quantum = quantum;
+								q4[0].readytime = timer;
+								q4[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty())//all queues are empty
+						{
+							//no elements, just increment timer
+							timer = timer +5;	
+						}
+					}
+				}
+				else//it will be done in more than one runs
+				{
+					if (c.cr < c.quantum-5&&c.ctkt>1)//current quantum has not been filled
+					{
+						q1[0].ctkt--;
+						q1[0].cr+=5;
+						q1[0].runningtime+=5;
+
+						timer=timer+5;
+					}
+					else if (c.cr = c.quantum-5&&c.ctkt>1)//this run is not enough
+					//up to now, cr will be same as quantum at this time point
+					{
+						q1[0].runningtime+=5;
+						q1[0].processCount++;
+						q1[0].cr=0;
+						q1[0].working=0;
+						//change nartime put it the end of q1
+						q1[0].narTime = timer;
+						q1.push_back(q1[0]);
+						q1.erase(q1.begin());
+
+						//start new customer
+						//start 0 case following
+						//new start
+						Customer c = q1[0];//q1 has highest priority
+				
+						//modify the object in the queue to store info
+						if (c.processCount == 0)
+						{
+							int quantum = (8-c.priority)*10; //quantum time units
+							q1[0].quantum = quantum;
+							q1[0].readytime = timer;
+							q1[0].working = 1;
+						}
+						else if (c.processCount != 0)
+						{
+							int quantum = (8-c.priority)*10; //quantum time units
+							q1[0].quantum = quantum;
+							q1[0].working = 1;
+						}
+						//after , we increment timer and change the start status
+						start = 1;
+						timer = timer +5;
+
+					}
+					if (c.cr <= c.quantum-5&&c.ctkt==1)//the end , start new customer
+					{
+						q1[0].ctkt--;
+						q1[0].runningtime+=5;
+						q1[0].endtime = timer;
+						readyq.push_back(q1[0]);
+						//erase the first element in q1
+						q1.erase(q1.begin());
+
+
+						//start new customer
+						if (!q1.empty())
+						{
+							Customer c = q1[0];//q1 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q1[0].quantum = quantum;
+								q1[0].readytime = timer;
+								q1[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&!q2.empty())
+						{
+							Customer c = q2[0];//q2 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q2[0].quantum = quantum;
+								q2[0].readytime = timer;
+								q2[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&!q3.empty())
+						{
+							Customer c = q3[0];//q3 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q3[0].quantum = quantum;
+								q3[0].readytime = timer;
+								q3[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&!q4.empty())
+						{
+							Customer c = q4[0];//q4 has highest priority
+				
+							int quantum = 100; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q4[0].quantum = quantum;
+								q4[0].readytime = timer;
+								q4[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty())//all queues are empty
+						{
+							//no elements, just increment timer
+							timer = timer +5;	
+						}
+					}
+
+				}
+			}
+
+			else if (q1.empty()&&!q2.empty()&&q2[0].working==1)//q2 continue
+			{
+				Customer c = q2[0];//q2
+				if (c.tickets<=c.quantum/5)//it can be done in one quantum
+				{
+					if (c.ctkt>1)//in the middle 
+					{
+						q2[0].ctkt--;
+						q2[0].runningtime+=5;
+						q2[0].cr+=5;
+						timer = timer +5;
+					}
+					
+					else if (c.ctkt==1)// end, 1 to 0, start new customer
+					{
+						q2[0].endtime = timer;
+						q2[0].runningtime+=5;
+						q2[0].processCount++;
+						q2[0].cr=0;
+						//push_back to readyq
+						readyq.push_back(q2[0]);
+						//erase the first element in q2
+						q2.erase(q2.begin());
+
+						//start new customer
+						//start 0 case next
+						if (q1.empty()&&!q2.empty())
+						{
+							Customer c = q2[0];//q2 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q2[0].quantum = quantum;
+								q2[0].readytime = timer;
+								q2[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&!q3.empty())
+						{
+							Customer c = q3[0];//q3 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q3[0].quantum = quantum;
+								q3[0].readytime = timer;
+								q3[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&!q4.empty())
+						{
+							Customer c = q4[0];//q4 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q4[0].quantum = quantum;
+								q4[0].readytime = timer;
+								q4[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty())//all queues are empty
+						{
+							//no elements, just increment timer
+							timer = timer +5;	
+						}
+					}
+				}
+				else//it will be done in more than one runs
+				{
+					if (c.cr < c.quantum-5&&c.ctkt>1)//current quantum has not been filled
+					{
+						q2[0].ctkt--;
+						q2[0].cr+=5;
+						q2[0].runningtime+=5;
+
+						timer+=5;
+					}
+					else if (c.cr = c.quantum-5&&c.ctkt>1)//this run is not enough
+					//up to now, cr will be same as quantum at this time point
+					{
+						q2[0].runningtime+=5;
+						q2[0].processCount++;
+						q2[0].cr=0;
+						q2[0].working=0;
+						//change nartime put it the end of q2
+						q2[0].narTime = timer;
+						q2.push_back(q2[0]);
+						q2.erase(q2.begin());
+
+						//start new customer
+						//start 0 case following
+						Customer c = q2[0];
+				
+						//modify the object in the queue to store info
+						if (c.processCount == 0)
+						{
+							int quantum = (8-c.priority)*10; //quantum time units
+							q2[0].quantum = quantum;
+							q2[0].readytime = timer;
+							q2[0].working = 1;
+						}
+						else if (c.processCount != 0)
+						{
+							int quantum = (8-c.priority)*10; //quantum time units
+							q2[0].quantum = quantum;
+							q2[0].working = 1;
+						}
+						//after , we increment timer and change the start status
+						start = 1;
+						timer = timer +5;
+
+					}
+					if (c.cr <= c.quantum-5&&c.ctkt==1)//the end , start new customer
+					{
+						q2[0].ctkt--;
+						q2[0].runningtime+=5;
+						q2[0].endtime = timer;
+						readyq.push_back(q2[0]);
+						//erase the first element in q2
+						q2.erase(q2.begin());
+
+						if (q1.empty()&&!q2.empty())
+						{
+							Customer c = q2[0];//q2 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q2[0].quantum = quantum;
+								q2[0].readytime = timer;
+								q2[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&!q3.empty())
+						{
+							Customer c = q3[0];//q3 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q3[0].quantum = quantum;
+								q3[0].readytime = timer;
+								q3[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&!q4.empty())
+						{
+							Customer c = q4[0];//q4 has highest priority
+				
+							int quantum = 100; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q4[0].quantum = quantum;
+								q4[0].readytime = timer;
+								q4[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty())//all queues are empty
+						{
+							//no elements, just increment timer
+							timer = timer +5;	
+						}
+					}
+
+				}		
+			}
+			else if (!q1.empty()&&!q2.empty()&&q2[0].working==1)// q2 interrupted by q1
+			{
+				
+			}
+			else if (q1.empty()&&q2.empty()&&!q3.empty()&&q3[0].working==1)//q3 continue
+			{
+				Customer c = q3[0];//q3
+				if (c.tickets<=c.quantum/5)//it can be done in one quantum
+				{
+					if (c.ctkt>1)//in the middle 
+					{
+						q3[0].ctkt--;
+						q3[0].runningtime+=5;
+						q3[0].cr+=5;
+						timer = timer +5;
+					}
+					
+					else if (c.ctkt==1)// end, 1 to 0, start new customer
+					{
+						q3[0].endtime = timer;
+						q3[0].runningtime+=5;
+						q3[0].processCount++;
+						q3[0].cr=0;
+						//push_back to readyq
+						readyq.push_back(q3[0]);
+						//erase the first element in q3
+						q3.erase(q3.begin());
+
+						//start new customer
+						//start 0 case next
+						if (q1.empty()&&q2.empty()&&!q3.empty())
+						{
+							Customer c = q3[0];//q3 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q3[0].quantum = quantum;
+								q3[0].readytime = timer;
+								q3[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&!q4.empty())
+						{
+							Customer c = q4[0];//q4 has highest priority
+				
+							int quantum = 100; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q4[0].quantum = quantum;
+								q4[0].readytime = timer;
+								q4[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty())//all queues are empty
+						{
+							//no elements, just increment timer
+							timer = timer +5;	
+						}
+					}
+				}
+				else//it will be done in more than one runs
+				{
+					if (c.cr < c.quantum-5&&c.ctkt>1)//current quantum has not been filled
+					{
+						q3[0].ctkt--;
+						q3[0].cr+=5;
+						q3[0].runningtime+=5;
+
+						timer+=5;
+					}
+					else if (c.cr = c.quantum-5&&c.ctkt>1)//this run is not enough
+					//up to now, cr will be same as quantum at this time point
+					{
+						q3[0].runningtime+=5;
+						q3[0].processCount++;
+						q3[0].cr=0;
+						q3[0].working=0;
+						//change nartime put it the end of q3
+						q3[0].narTime = timer;
+						q3.push_back(q3[0]);
+						q3.erase(q3.begin());
+
+						//start new customer
+						//start 0 case following
+
+						Customer c = q3[0];
+				
+						//modify the object in the queue to store info
+						if (c.processCount == 0)
+						{
+							int quantum = (8-c.priority)*10; //quantum time units
+							q3[0].quantum = quantum;
+							q3[0].readytime = timer;
+							q3[0].working = 1;
+						}
+						else if (c.processCount != 0)
+						{
+							int quantum = (8-c.priority)*10; //quantum time units
+							q3[0].quantum = quantum;
+							q3[0].working = 1;
+						}
+						//after , we increment timer and change the start status
+						start = 1;
+						timer = timer +5;
+
+					}
+					if (c.cr <= c.quantum-5&&c.ctkt==1)//the end , start new customer
+					{
+						q3[0].ctkt--;
+						q3[0].runningtime+=5;
+						q3[0].endtime = timer;
+						readyq.push_back(q3[0]);
+						//erase the first element in q3
+						q3.erase(q3.begin());
+
+					
+						if (q1.empty()&&q2.empty()&&!q3.empty())
+						{
+							Customer c = q3[0];//q3 has highest priority
+							int N = (8-c.priority)*10/5;//the quota for this run
+							int quantum = (8-c.priority)*10; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q3[0].quantum = quantum;
+								q3[0].readytime = timer;
+								q3[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&!q4.empty())
+						{
+							Customer c = q4[0];//q4 has highest priority
+				
+							int quantum = 100; //quantum time units
+				
+							//modify the object in the queue to store info
+							if (c.processCount == 0)
+							{
+								q4[0].quantum = quantum;
+								q4[0].readytime = timer;
+								q4[0].working = 1;
+							}
+							//after , we increment timer and change the start status
+							start = 1;
+							timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty())//all queues are empty
+						{
+							//no elements, just increment timer
+							timer = timer +5;	
+						}
+					}
+
+				}
+			}
+			else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty()&&q4[0].working==1)//q4 contunue
+			{
+				Customer c = q4[0];//q4
+				if (c.tickets<=c.quantum/5)//it can be done in one quantum
+				{
+					if (c.ctkt>1)//in the middle 
+					{
+						q4[0].ctkt--;
+						q4[0].runningtime+=5;
+						q4[0].cr+=5;
+						timer = timer +5;
+					}
+					
+					else if (c.ctkt==1)// end, 1 to 0, start new customer
+					{
+						q4[0].endtime = timer;
+						q4[0].runningtime+=5;
+						q4[0].processCount++;
+						q4[0].cr=0;
+						//push_back to readyq
+						readyq.push_back(q4[0]);
+						//erase the first element in q4
+						q4.erase(q4.begin());
+
+
+						//start 0 case next
+						if (q1.empty()&&q2.empty()&&q3.empty()&&!q4.empty())
+						{
+				Customer c = q4[0];//q4 has highest priority
+				
+				int quantum = 100; //quantum time units
+				
+				//modify the object in the queue to store info
+				if (c.processCount == 0)
+				{
+					q4[0].quantum = quantum;
+					q4[0].readytime = timer;
+					q4[0].working = 1;
+				}
+				//after , we increment timer and change the start status
+				start = 1;
+				timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty())//all queues are empty
+						{
+						//no elements, just increment timer
+						timer = timer +5;	
+						}
+					}
+				}
+				else//it will be done in more than one runs
+				{
+					if (c.cr < c.quantum-5&&c.ctkt>1)//current quantum has not been filled
+					{
+						q4[0].ctkt--;
+						q4[0].cr+=5;
+						q4[0].runningtime+=5;
+
+						timer+=5;
+					}
+					else if (c.cr = c.quantum-5&&c.ctkt>1)//this run is not enough
+					//up to now, cr will be same as quantum at this time point
+					{
+						q4[0].runningtime+=5;
+						q4[0].processCount++;
+						q4[0].cr=0;
+						q4[0].working=0;
+						//change nartime put it the end of q4
+						q4[0].narTime = timer;
+						q4.push_back(q4[0]);
+						q4.erase(q4.begin());
+
+						//start new customer
+						//start 0 case following
+
+						Customer c = q4[0];
+				
+						//modify the object in the queue to store info
+						if (c.processCount == 0)
+						{
+							int quantum = (8-c.priority)*10; //quantum time units
+							q4[0].quantum = quantum;
+							q4[0].readytime = timer;
+							q4[0].working = 1;
+						}
+						else if (c.processCount != 0)
+						{
+							int quantum = (8-c.priority)*10; //quantum time units
+							q4[0].quantum = quantum;
+							q4[0].working = 1;
+						}
+						//after , we increment timer and change the start status
+						start = 1;
+						timer = timer +5;
+
+					}
+					if (c.cr <= c.quantum-5&&c.ctkt==1)//the end , start new customer
+					{
+						q4[0].ctkt--;
+						q4[0].runningtime+=5;
+						q4[0].endtime = timer;
+						readyq.push_back(q4[0]);
+						//erase the first element in q4
+						q4.erase(q4.begin());
+
+					
+					
+						if (q1.empty()&&q2.empty()&&q3.empty()&&!q4.empty())
+						{
+				Customer c = q4[0];//q4 has highest priority
+				
+				int quantum = 100; //quantum time units
+				
+				//modify the object in the queue to store info
+				if (c.processCount == 0)
+				{
+					q4[0].quantum = quantum;
+					q4[0].readytime = timer;
+					q4[0].working = 1;
+				}
+				//after , we increment timer and change the start status
+				start = 1;
+				timer = timer +5;
+						}
+						else if (q1.empty()&&q2.empty()&&q3.empty()&&q4.empty())//all queues are empty
+						{
+							//no elements, just increment timer
+							timer = timer +5;	
+						}
+					}
+
+				}
+			}
+		}
+	
+
+	}
+	
+
+
+
+	//output 
+	string s = "name   arrival   end   ready   running   waiting";
+	cout<<s<<endl;
+/*	for (int i = 0; i < readyq.size(); ++i)
+	{
+		int ss = readyq[i].endtime-readyq[i].readytime-readyq[i].runningtime;
+		cout<<readyq[i].ID<<" "<<readyq[i].arTime<<" "<<readyq[i].endtime<<" "<<readyq[i].readytime<<" "<<readyq[i].runningtime<<" "<<ss<<endl;
+	}
+
+*/
+
+
+
+
+
+
+	return 0;
+}

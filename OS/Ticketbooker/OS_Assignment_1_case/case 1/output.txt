@@ -1,0 +1,7 @@
+name   arrival   end   ready   running   waiting
+a3       100       180       120        60         0
+a2         0       490        60       200       230
+a1         0       560         0       300       260
+a0         0       610       560        50         0
+a4         0       700       610        90         0
+
