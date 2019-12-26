@@ -1,0 +1,10 @@
+Dear Manager,
+
+ the problem (1), was due to uncompleted coding. I fixed it by completing all the sorting part code.
+
+ the problem(2), was due to the binary search, in binary searching, we always need to sort the list first, then we can use binary search to find the item. I fixed it by using Linear Search instead. In Linear Searching, it does not matter if the searching space is sorted or not, we always search the item one by one.
+
+ the problem(3), was due to the inefficiency of insertion sort, I fixed it by using a better sorting algorithm, which is Selection Sort.
+
+
+ Kind regards, Luoyang Xing a1756195
