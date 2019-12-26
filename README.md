@@ -1,2 +1,2 @@
 # University-Projects
-all the projects done in master degree stage
+all the projects done during my master degree 
